@@ -25,7 +25,7 @@ def build_naive_circuit(n,angles):
     Returns
     -------
     qiskit.circuit.quantumcircuit.QuantumCircuit
-        Quantum circuit implementing the naive position-dependent coin operator followed by the shift operator
+        Quantum circuit implementing the naive position-dependent coin operator
         for n_step steps
     """
     N = 2**n
@@ -45,6 +45,35 @@ def build_naive_circuit(n,angles):
         u = UGate(theta, phi, lam, label='C'+str(i))
         qc.append(u.control(n),qubits)
         #qc.barrier()
+    return qc
+
+def build_naive_circuit_shift(n,angles):
+    """
+    Parameters
+    ----------
+    n : int
+        The number of qubits encoding the position
+    angles : numpy.ndarray
+        Array of size 2**n which contains the angles used to parameterize the coin operators.
+        angles[k] = [theta, phi, lam] contains the angles used to parameterize the coin operator 
+        applied to the position k
+
+    Returns
+    -------
+    qiskit.circuit.quantumcircuit.QuantumCircuit
+        Quantum circuit implementing the naive position-dependent coin operator followed by the shift operator
+        for n_step steps
+    """
+    N = 2**n
+    # Position register
+    b = QuantumRegister(n, name= 'b' )
+    # Coins register, s[0] is the principal coin
+    s = QuantumRegister(1, name= 's' )
+    qc = QuantumCircuit(b, s)
+    qubits = [i for i in b] + [s[0]]
+    # Coin operators
+    qc = qc.compose(build_naive_circuit(n,angles),qubits)
+    # Shift
     qc = qc.compose(shift(n),qubits)
     return qc
 
@@ -76,7 +105,7 @@ def quantum_walk_naive_circuit(n,angles,n_step):
     c = ClassicalRegister(n,name="c")
     qc = QuantumCircuit(b, s,c)
     qubits = [i for i in b] + [s[0]]
-    quantum_circuit = build_naive_circuit(n,angles)
+    quantum_circuit = build_naive_circuit_shift(n,angles)
     for i in range(n_step):
         qc = qc.compose(quantum_circuit, qubits)
     # Measurement of the position register

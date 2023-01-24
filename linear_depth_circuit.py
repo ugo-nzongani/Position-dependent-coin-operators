@@ -179,7 +179,7 @@ def build_linear_depth_circuit(n,angles):
     Returns
     -------
     qiskit.circuit.quantumcircuit.QuantumCircuit
-        Quantum circuit implementing the position-dependent coin operator followed by the shift operator
+        Quantum circuit implementing the position-dependent coin operator
     """
     N = 2**n
     # Position register
@@ -191,8 +191,6 @@ def build_linear_depth_circuit(n,angles):
     qc = QuantumCircuit(b, s, b_aux)
     # All qubits
     all_qubits = [i for i in b] + [i for i in s] + [i for i in b_aux]
-    # Qubits used for the walk
-    walk_qubits = [i for i in b] + [s[0]]
     # Adding the Q gates
     # Coin operators
     # Q1
@@ -209,6 +207,39 @@ def build_linear_depth_circuit(n,angles):
     qc = qc.compose(q10(n),all_qubits)
     qc = qc.compose(q11(n).inverse(),all_qubits)
     qc = qc.compose(q10(n).inverse(),all_qubits)
+    return qc
+
+def build_linear_depth_circuit_shift(n,angles):
+    """
+    Parameters
+    ----------
+    n : int
+        The number of qubits encoding the position
+    angles : numpy.ndarray
+        Array of size 2**n which contains the angles used to parameterize the coin operators.
+        angles[k] = [theta, phi, lam] contains the angles used to parameterize the coin operator 
+        applied to the position k
+
+    Returns
+    -------
+    qiskit.circuit.quantumcircuit.QuantumCircuit
+        Quantum circuit implementing the position-dependent coin operator followed by the shift operator
+    """
+    N = 2**n
+    # Position register
+    b = QuantumRegister(n, name= 'b' )
+    # Coins register, s[0] is the principal coin
+    s = QuantumRegister(N, name= 's' )
+    # Ancillary position register
+    b_aux = QuantumRegister(N , name= "b'" )
+    qc = QuantumCircuit(b, s, b_aux)
+    # All qubits
+    all_qubits = [i for i in b] + [i for i in s] + [i for i in b_aux]
+    # Qubits used for the walk
+    walk_qubits = [i for i in b] + [s[0]]
+    # Adding the Q gates
+    # Coin operators
+    qc = qc.compose(build_linear_depth_circuit(n,angles),all_qubits)
     # Shift operator
     qc = qc.compose(shift(n),walk_qubits)
     return qc
@@ -244,7 +275,7 @@ def quantum_walk_linear_depth_circuit(n,angles,n_step):
     qc = QuantumCircuit(b, s, b_aux,c)
     # All qubits
     all_qubits = [i for i in b] + [i for i in s] + [i for i in b_aux]
-    quantum_circuit = build_linear_depth_circuit(n,angles)
+    quantum_circuit = build_linear_depth_circuit_shift(n,angles)
     for i in range(n_step):
         qc = qc.compose(quantum_circuit, all_qubits)
     # Measurement of the position register
