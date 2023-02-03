@@ -161,7 +161,9 @@ def q0(n, angles):
         theta = angles[k][0]
         phi = angles[k][1]
         lam = angles[k][2]
-        qc.cu(theta, phi, lam, 0, b_aux[k], s[k])
+        #qc.cu(theta, phi, lam, 0, b_aux[k], s[k], label='r')
+        gate = UGate(theta, phi, lam, label="C"+str(k))
+        qc.append(gate.control(1), [b_aux[k], s[k]])
     #qc.barrier()
     return qc
 
