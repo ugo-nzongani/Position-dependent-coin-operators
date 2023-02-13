@@ -1,4 +1,6 @@
 from qiskit import *
+from qiskit.circuit.library import QFT
+from numpy import pi
 
 """Fujiwara's shift operator circuit implementation"""
 
@@ -36,7 +38,7 @@ def shift(n):
     Returns
     -------
     qiskit.circuit.quantumcircuit.QuantumCircuit
-        Quantum circuit implementing the shift operator
+        Quantum circuit implementing the shift operator introduced by Fujiwara et al. (10.1103/PhysRevA.72.032329)
     """
     # Position register
     b = QuantumRegister(n, name="b")
@@ -53,4 +55,44 @@ def shift(n):
     #qc.barrier()
     qc.x(s[0])
     #qc.barrier()
+    return qc
+
+
+"""QFT's shift operator circuit implementation from Asif Shakeel's paper"""
+
+def qft_shift(n):
+    """
+    Parameters
+    ----------
+    n : int
+        The number of qubits encoding the position
+
+    Returns
+    -------
+    qiskit.circuit.quantumcircuit.QuantumCircuit
+        Quantum circuit implementing the shift operator using the QFT introduced by Asif Shakeel (10.1007/s11128-020-02834-y)
+    """
+    # Position register
+    b = QuantumRegister(n, name="b")
+    # Coin register
+    s = QuantumRegister(1, name="s")
+    # Create a quantum circuit using the quantum and classical registers
+    qc = QuantumCircuit(b, s)
+
+    position_qubits = [i for i in b]
+    #position_qubits.reverse()
+    
+    qft = QFT(n, do_swaps=False)
+    # We put a NOT gate because in his paper the walker goes on the left when the coin is |1>
+    # But in our implementation it's actually when its value is |0>
+    qc.x(s[0])
+    for i in range(n):
+        qc.cx(s[0], b[n-i-1])
+    qc.append(qft, position_qubits)
+    for i in range(n):
+        qc.p(2*pi/2**(n-i), n-i-1)
+    qc.append(qft.inverse(), position_qubits)
+    for i in range(n):
+        qc.cx(s[0], b[i])
+    qc.x(s[0])
     return qc

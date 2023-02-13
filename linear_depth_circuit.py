@@ -211,7 +211,7 @@ def build_linear_depth_circuit(n,angles):
     qc = qc.compose(q10(n).inverse(),all_qubits)
     return qc
 
-def build_linear_depth_circuit_shift(n,angles):
+def build_linear_depth_circuit_shift(n,angles,qft):
     """
     Parameters
     ----------
@@ -221,6 +221,8 @@ def build_linear_depth_circuit_shift(n,angles):
         Array of size 2**n which contains the angles used to parameterize the coin operators.
         angles[k] = [theta, phi, lam] contains the angles used to parameterize the coin operator 
         applied to the position k
+    qft : bool
+        True if the shift operator is implemented using the QFT
 
     Returns
     -------
@@ -243,10 +245,13 @@ def build_linear_depth_circuit_shift(n,angles):
     # Coin operators
     qc = qc.compose(build_linear_depth_circuit(n,angles),all_qubits)
     # Shift operator
-    qc = qc.compose(shift(n),walk_qubits)
+    if qft:
+        qc = qc.compose(qft_shift(n),walk_qubits)
+    else:
+        qc = qc.compose(shift(n),walk_qubits)
     return qc
 
-def quantum_walk_linear_depth_circuit(n,angles,n_step):
+def quantum_walk_linear_depth_circuit(n,angles,n_step,qft):
     """
     Parameters
     ----------
@@ -258,6 +263,8 @@ def quantum_walk_linear_depth_circuit(n,angles,n_step):
         applied to the position k
     n_step : int
         The number of steps the walker must take
+    qft : bool
+        True if the shift operator is implemented using the QFT
 
     Returns
     -------
@@ -277,7 +284,7 @@ def quantum_walk_linear_depth_circuit(n,angles,n_step):
     qc = QuantumCircuit(b, s, b_aux,c)
     # All qubits
     all_qubits = [i for i in b] + [i for i in s] + [i for i in b_aux]
-    quantum_circuit = build_linear_depth_circuit_shift(n,angles)
+    quantum_circuit = build_linear_depth_circuit_shift(n,angles,qft)
     for i in range(n_step):
         qc = qc.compose(quantum_circuit, all_qubits)
     # Measurement of the position register
