@@ -42,8 +42,15 @@ def build_naive_circuit(n,angles):
         theta = angles[i][0]
         phi = angles[i][1]
         lam = angles[i][2]
-        u = UGate(theta, phi, lam, label='C'+str(i))
-        qc.append(u.control(n),qubits)
+        gamma = angles[i][3]
+        
+        array = np.exp(1j*gamma) * np.array([
+            [np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)],
+            [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(phi+lam))*np.cos(theta/2)]], dtype=np.complex128)
+        gate = UnitaryGate(array, label="C"+str(i))
+        qc.append(gate.control(n), qubits)
+        #u = UGate(theta, phi, lam, label='C'+str(i))
+        #qc.append(u.control(n),qubits)
         #qc.barrier()
     return qc
 
@@ -130,18 +137,20 @@ def random_angles(n):
     -------
     numpy.ndarray
         Array of size 2**n which contains the angles used to parameterize the coin operators.
-        angles[k] = [theta, phi, lam] contains the angles used to parameterize the coin operator 
+        angles[k] = [theta, phi, lam, gamma] contains the angles used to parameterize the coin operator 
         applied to the position k
     """
     N = 2**n
-    angles = np.zeros((N, 3))
+    angles = np.zeros((N, 4))
     for k in range(N):
         theta = random.uniform(0, np.pi)
         phi = random.uniform(-np.pi, np.pi)
         lam = random.uniform(-np.pi, np.pi)
+        gamma = random.uniform(0, np.pi)
         angles[k][0] = theta
         angles[k][1] = phi
         angles[k][2] = lam
+        angles[k][3] = gamma
     return angles
 
 def simulate_circuit(qc,n_shot):

@@ -25,7 +25,7 @@ def shift_operator(n):
     s = np.kron(s0, [[1,0],[0,0]]) + np.kron(s1, [[0,0],[0,1]])
     return s
 
-def unitary(theta,phi,lam):
+def unitary(theta,phi,lam,gamma):
     """
     Parameters
     ----------
@@ -35,17 +35,20 @@ def unitary(theta,phi,lam):
         Euler angle phi
     lam : float
         Euler angle lambda
+    gamma : float
+        Global phase, exp(i*gamma)
 
     Returns
     -------
     numpy.ndarray
-        Unitary parametrized with the 3 Euler angles
+        Unitary parametrized with 3 Euler angles and a global phase
     """
     u = np.zeros((2,2), dtype=np.complex128)
     u[0][0] = np.cos(theta/2)
     u[0][1] = -np.exp(1j*lam) * np.sin(theta/2)
     u[1][0] = np.exp(1j*phi) * np.sin(theta/2)
     u[1][1] = np.exp(1j*(phi+lam)) * np.cos(theta/2)
+    u *= np.exp(1j*gamma)
     return u
 
 def position_dependent_coin_operators(n,angles):
@@ -67,7 +70,7 @@ def position_dependent_coin_operators(n,angles):
     N = 2**n
     coin_temp = []
     for i in range(N):
-        coin_operator = unitary(angles[i][0],angles[i][1],angles[i][2])
+        coin_operator = unitary(angles[i][0],angles[i][1],angles[i][2],angles[i][3])
         c = np.zeros((N,N), dtype=np.complex128)
         c[i][i] = 1
         c = np.kron(c,coin_operator)
@@ -210,16 +213,18 @@ def random_angles(n):
     -------
     numpy.ndarray
         Array of size 2**n which contains the angles used to parameterize the coin operators.
-        angles[k] = [theta, phi, lam] contains the angles used to parameterize the coin operator 
+        angles[k] = [theta, phi, lam, gamma] contains the angles used to parameterize the coin operator 
         applied to the position k
     """
     N = 2**n
-    angles = np.zeros((N, 3))
+    angles = np.zeros((N, 4))
     for k in range(N):
         theta = random.uniform(0, np.pi)
         phi = random.uniform(-np.pi, np.pi)
         lam = random.uniform(-np.pi, np.pi)
+        gamma = random.uniform(0, np.pi)
         angles[k][0] = theta
         angles[k][1] = phi
         angles[k][2] = lam
+        angles[k][3] = gamma
     return angles

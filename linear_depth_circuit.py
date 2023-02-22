@@ -5,6 +5,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.providers.basicaer import QasmSimulatorPy
 from qiskit.providers.aer import QasmSimulator
 from shift_circuit import *
+import qiskit.quantum_info as qi
 import numpy as np
 import random
 
@@ -161,8 +162,13 @@ def q0(n, angles):
         theta = angles[k][0]
         phi = angles[k][1]
         lam = angles[k][2]
-        #qc.cu(theta, phi, lam, 0, b_aux[k], s[k], label='r')
-        gate = UGate(theta, phi, lam, label="C"+str(k))
+        gamma = angles[k][3]
+        #qc.cu(theta, phi, lam, gamma, b_aux[k], s[k], label="C"+str(k))
+        
+        array = np.exp(1j*gamma) * np.array([
+            [np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)],
+            [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(phi+lam))*np.cos(theta/2)]], dtype=np.complex128)
+        gate = UnitaryGate(array, label="C"+str(k))
         qc.append(gate.control(1), [b_aux[k], s[k]])
     #qc.barrier()
     return qc
@@ -302,18 +308,20 @@ def random_angles(n):
     -------
     numpy.ndarray
         Array of size 2**n which contains the angles used to parameterize the coin operators.
-        angles[k] = [theta, phi, lam] contains the angles used to parameterize the coin operator 
+        angles[k] = [theta, phi, lam, gamma] contains the angles used to parameterize the coin operator 
         applied to the position k
     """
     N = 2**n
-    angles = np.zeros((N, 3))
+    angles = np.zeros((N, 4))
     for k in range(N):
         theta = random.uniform(0, np.pi)
         phi = random.uniform(-np.pi, np.pi)
         lam = random.uniform(-np.pi, np.pi)
+        gamma = random.uniform(0, np.pi)
         angles[k][0] = theta
         angles[k][1] = phi
         angles[k][2] = lam
+        angles[k][3] = gamma
     return angles
 
 def simulate_circuit(qc,n_shot):
