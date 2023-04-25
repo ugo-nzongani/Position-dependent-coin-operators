@@ -49,6 +49,7 @@ def build_naive_circuit(n,angles):
             [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(phi+lam))*np.cos(theta/2)]], dtype=np.complex128)
         gate = UnitaryGate(array, label="C"+str(i))
         qc.append(gate.control(n), qubits)
+        
         #u = UGate(theta, phi, lam, label='C'+str(i))
         #qc.append(u.control(n),qubits)
         #qc.barrier()
